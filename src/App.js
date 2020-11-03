@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import Post from "./components/Post/Post";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 import { makeStyles } from "@material-ui/core/styles";
 import Modal from "@material-ui/core/Modal";
 import { Button, Input } from "@material-ui/core";
@@ -34,11 +34,39 @@ function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [user, setUser] = useState(null);
   const classes = useStyles();
+
+  useEffect(() => {
+    auth.onAuthStateChanged((authUser) => {
+      if (authUser) {
+        // user has logged in
+        console.log(authUser);
+        setUser(authUser);
+
+        if (authUser.displayName) {
+          // don't update username
+        } else {
+          return authUser.updateProfile({
+            displayName: username,
+          });
+        }
+      } else {
+        // user has logged out
+        setUser(null);
+      }
+    });
+  }, [user, username]);
 
   const [modalStyle] = useState(getModalStyle);
 
-  const signup = () => {};
+  const signup = (event) => {
+    event.preventDefault();
+
+    auth
+      .createUserWithEmailAndPassword(email, password)
+      .catch((error) => alert(error.message));
+  };
 
   // [] means the code runs once when the page loads and not again
   // [posts] means the code runs when the page loads and also whenever the content of posts changes
@@ -58,7 +86,7 @@ function App() {
     <div className="app">
       <Modal open={open} onClose={() => setOpen(false)}>
         <div style={modalStyle} className={classes.paper}>
-          <form>
+          <form className="app__signup">
             <center>
               <img
                 className="app__headerImage"
@@ -84,7 +112,9 @@ function App() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <Button onClick={signup}>Sign Up</Button>
+            <Button type="submit" onClick={signup}>
+              Sign Up
+            </Button>
           </form>
         </div>
       </Modal>
