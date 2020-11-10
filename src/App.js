@@ -38,7 +38,7 @@ function App() {
   const classes = useStyles();
 
   useEffect(() => {
-    auth.onAuthStateChanged((authUser) => {
+    const unsubscribe = auth.onAuthStateChanged((authUser) => {
       if (authUser) {
         // user has logged in
         console.log(authUser);
@@ -56,6 +56,11 @@ function App() {
         setUser(null);
       }
     });
+
+    return () => {
+      // stop all preceding activity on useEffect
+      unsubscribe();
+    };
   }, [user, username]);
 
   const [modalStyle] = useState(getModalStyle);
@@ -108,7 +113,7 @@ function App() {
             />
             <Input
               placeholder="password"
-              type="text"
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -126,7 +131,11 @@ function App() {
         />
       </div>
 
-      <Button onClick={() => setOpen(true)}>Sign Up</Button>
+      {user ? (
+        <Button onClick={() => auth.signOut()}>Sign Out</Button>
+      ) : (
+        <Button onClick={() => setOpen(true)}>Sign Up</Button>
+      )}
 
       {/* Posts */}
 
